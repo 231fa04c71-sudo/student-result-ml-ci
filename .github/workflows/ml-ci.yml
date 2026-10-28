@@ -44,11 +44,6 @@ jobs:
       - name: Upload validated ML artifacts
         uses: actions/upload-artifact@v7
         with:
-          
-         
-      - name: Upload validated ML artifacts
-        uses: actions/upload-artifact@v7
-        with:
           name: student-result-ml-artifacts
           path: |
             student_result_model.pkl

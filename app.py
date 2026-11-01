@@ -5,14 +5,27 @@ import numpy as np
 
 app = Flask(__name__)
 
+# Load trained ML model
 model = joblib.load("student_result_model.pkl")
 
 
+# Home API
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "Student Result Prediction API is running"})
+    return jsonify({
+        "message": "Student Result Prediction API is running"
+    })
 
 
+# Health Check API
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({
+        "status": "healthy"
+    })
+
+
+# Prediction API
 @app.route("/predict", methods=["POST"])
 def predict():
     data = request.get_json(silent=True) or {}
@@ -25,7 +38,9 @@ def predict():
     ]
 
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "Missing required fields"}), 400
+        return jsonify({
+            "error": "Missing required fields"
+        }), 400
 
     try:
         features = np.array([[
@@ -35,11 +50,16 @@ def predict():
         prediction = model.predict(features)[0]
         result = "PASS" if prediction == 1 else "FAIL"
 
-        return jsonify({"prediction": result})
+        return jsonify({
+            "prediction": result
+        })
 
     except (ValueError, TypeError):
-        return jsonify({"error": "Invalid input values"}), 400
+        return jsonify({
+            "error": "Invalid input values"
+        }), 400
 
 
+# Run Flask application
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

@@ -1,5 +1,5 @@
 
-name: Student Result ML CI
+name: Student Result ML CI and GHCR Publish
 
 on:
   push:
@@ -12,9 +12,10 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  train-and-test:
+  train-test-build-publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -104,3 +105,29 @@ jobs:
           path: release_candidate/
           if-no-files-found: error
           retention-days: 7
+
+      - name: Prepare GHCR image name
+        if: github.event_name != 'pull_request'
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/student-result-ml
+          IMAGE_ID=$(echo "$IMAGE_ID" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_ID=$IMAGE_ID" >> "$GITHUB_ENV"
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
+            -u "${{ github.actor }}" \
+            --password-stdin
+
+      - name: Tag tested Docker image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker tag student-result-ml:${{ github.sha }} $IMAGE_ID:latest
+          docker tag student-result-ml:${{ github.sha }} $IMAGE_ID:sha-${{ github.sha }}
+
+      - name: Push Docker image to GHCR
+        if: github.event_name != 'pull_request'
+        run: |
+          docker push $IMAGE_ID:latest
+          docker push $IMAGE_ID:sha-${{ github.sha }}
